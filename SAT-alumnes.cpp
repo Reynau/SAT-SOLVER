@@ -33,11 +33,15 @@ void readClauses( ){
   cin >> aux >> numVars >> numClauses;
   clauses.resize(numClauses);
   points.resize(numVars + 1, 0);
+  posClauses.resize(numVars + 1);
+  negClauses.resize(numVars + 1);
   // Read clauses
   for (uint i = 0; i < numClauses; ++i) {
     int lit;
     while (cin >> lit and lit != 0) {
       clauses[i].push_back(lit);
+      if (lit > 0) posClauses[lit].push_back(i);
+      else negClauses[-lit].push_back(i);
     }
   }
 }
@@ -62,7 +66,35 @@ void setLiteralToTrue(int lit){
 
 bool propagateGivesConflict ( ) {
   while ( indexOfNextLitToPropagate < modelStack.size() ) {
+    int lit = modelStack[indexOfNextLitToPropagate];
+    uint size = lit > 0 ? negClauses[lit].size() : posClauses[-lit].size();
+    for (uint k = 0; k < size; ++k) {
+      int i = lit > 0 ? negClauses[lit][k] : posClauses[-lit][k]; // Position of the clause on clauses array
+      bool someLitTrue = false;
+      int numUndefs = 0;
+      int lastLitUndef = 0;
+      for (uint j = 0; !someLitTrue && j < clauses[i].size(); ++j) {
+        int val = currentValueInModel(clauses[i][j]);
+      	if (val == TRUE) someLitTrue = true;
+      	else if (val == UNDEF) {
+          ++numUndefs;
+          lastLitUndef = clauses[i][j];
+        }
+      }
+      if (!someLitTrue && numUndefs == 0) {
+        for (uint k = 0; k < clauses[i].size(); ++k){
+          int val = clauses[i][k];
+          ++points[abs(val)];
+        }
+        return true; // conflict! all lits false
+      }
+      else if (not someLitTrue and numUndefs == 1) setLiteralToTrue(lastLitUndef);
+    }
     ++indexOfNextLitToPropagate;
+  }
+
+
+    /*
     for (uint i = 0; i < numClauses; ++i) {
       bool someLitTrue = false;
       int numUndefs = 0;
@@ -81,7 +113,8 @@ bool propagateGivesConflict ( ) {
       }
       else if (not someLitTrue and numUndefs == 1) setLiteralToTrue(lastLitUndef);
     }
-  }
+    */
+
   return false;
 }
 
