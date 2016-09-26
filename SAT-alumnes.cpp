@@ -8,6 +8,9 @@ using namespace std;
 #define TRUE 1
 #define FALSE 0
 
+#define DIVIDER 2
+
+
 uint numVars;
 uint numClauses;
 vector<vector<int> > clauses;
@@ -46,8 +49,6 @@ void readClauses( ){
   }
 }
 
-
-
 int currentValueInModel(int lit){
   if (lit >= 0) return model[lit];
   else {
@@ -56,13 +57,11 @@ int currentValueInModel(int lit){
   }
 }
 
-
 void setLiteralToTrue(int lit){
   modelStack.push_back(lit);
   if (lit > 0) model[lit] = TRUE;
   else model[-lit] = FALSE;
 }
-
 
 bool propagateGivesConflict ( ) {
   while ( indexOfNextLitToPropagate < modelStack.size() ) {
@@ -92,32 +91,8 @@ bool propagateGivesConflict ( ) {
     }
     ++indexOfNextLitToPropagate;
   }
-
-
-    /*
-    for (uint i = 0; i < numClauses; ++i) {
-      bool someLitTrue = false;
-      int numUndefs = 0;
-      int lastLitUndef = 0;
-      for (uint k = 0; not someLitTrue and k < clauses[i].size(); ++k){
-      	int val = currentValueInModel(clauses[i][k]);
-      	if (val == TRUE) someLitTrue = true;
-      	else if (val == UNDEF){ ++numUndefs; lastLitUndef = clauses[i][k]; }
-      }
-      if (not someLitTrue and numUndefs == 0) {
-        for (uint k = 0; k < clauses[i].size(); ++k){
-          int lit = clauses[i][k];
-          ++points[abs(lit)];
-        }
-        return true; // conflict! all lits false
-      }
-      else if (not someLitTrue and numUndefs == 1) setLiteralToTrue(lastLitUndef);
-    }
-    */
-
   return false;
 }
-
 
 void backtrack(){
   uint i = modelStack.size() -1;
@@ -135,11 +110,15 @@ void backtrack(){
   setLiteralToTrue(-lit);  // reverse last decision
 }
 
+void dividePoints () {
+  for (uint i = 0; i < points.size(); ++i) {
+    points[i] /= DIVIDER;
+  }
+}
 
 // Heuristic for finding the next decision literal:
 int getNextDecisionLiteral(){
-  int bigger = 0;
-  uint i;
+  uint i, bigger = 0;
   for (i = 1; i <= numVars; ++i) {
     if(model[i] == UNDEF) {
       bigger = i;
@@ -149,6 +128,7 @@ int getNextDecisionLiteral(){
   for (i; i <= numVars; ++i) // stupid heuristic:
     if (model[i] == UNDEF && points[i] > points[bigger])
       bigger = i;  // returns first UNDEF var, positively
+  if (points[bigger] > numVars) dividePoints();
   return bigger; // reurns 0 when all literals are defined
 }
 
