@@ -9,10 +9,11 @@ using namespace std;
 #define FALSE 0
 
 #define DIVIDER 2
-
+#define DECISIONS 2000
 
 uint numVars;
 uint numClauses;
+uint numDecisions;
 vector<vector<int> > clauses;
 vector<int> model;
 vector<int> modelStack;
@@ -23,6 +24,12 @@ vector<int> points;
 
 vector< vector<int> > posClauses;
 vector< vector<int> > negClauses;
+
+void dividePoints () {
+  for (uint i = 0; i < points.size(); ++i) {
+    points[i] /= DIVIDER;
+  }
+}
 
 void readClauses( ){
   // Skip comments
@@ -110,12 +117,6 @@ void backtrack(){
   setLiteralToTrue(-lit);  // reverse last decision
 }
 
-void dividePoints () {
-  for (uint i = 0; i < points.size(); ++i) {
-    points[i] /= DIVIDER;
-  }
-}
-
 // Heuristic for finding the next decision literal:
 int getNextDecisionLiteral(){
   uint i, bigger = 0;
@@ -128,7 +129,6 @@ int getNextDecisionLiteral(){
   for (i; i <= numVars; ++i) // stupid heuristic:
     if (model[i] == UNDEF && points[i] > points[bigger])
       bigger = i;  // returns first UNDEF var, positively
-  if (points[bigger] > numVars) dividePoints();
   return bigger; // reurns 0 when all literals are defined
 }
 
@@ -151,6 +151,7 @@ int main(){
   model.resize(numVars+1,UNDEF);
   indexOfNextLitToPropagate = 0;
   decisionLevel = 0;
+  numDecisions = 0;
 
   // Take care of initial unit clauses, if any
   for (uint i = 0; i < numClauses; ++i)
@@ -174,5 +175,8 @@ int main(){
     ++indexOfNextLitToPropagate;
     ++decisionLevel;
     setLiteralToTrue(decisionLit);    // now push decisionLit on top of the mark
+
+    ++numDecisions;
+    if (numDecisions > DECISIONS) dividePoints();
   }
 }
