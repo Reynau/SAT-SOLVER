@@ -138,8 +138,6 @@ int getNextDecisionLiteral(){
     if (model[i] == UNDEF && points[i] > points[bigger])
       bigger = i;  // returns first UNDEF var, positively
 
-  if (points[bigger] > numClauses) dividePoints();
-
   return bigger; // reurns 0 when all literals are defined
 }
 
@@ -188,6 +186,9 @@ int main(){
     setLiteralToTrue(decisionLit);    // now push decisionLit on top of the mark
 
     ++numDecisions;
-    //if (numDecisions > DECISIONS) dividePoints();
+    if (numDecisions > DECISIONS) {
+      dividePoints();
+      numDecisions = numDecisions % DECISIONS;
+    }
   }
 }
