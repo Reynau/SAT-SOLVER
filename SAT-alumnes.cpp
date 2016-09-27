@@ -9,7 +9,7 @@ using namespace std;
 #define FALSE 0
 
 #define DIVIDER 2
-#define DECISIONS 2000
+#define DECISIONS 4000
 
 uint numVars;
 uint numClauses;
@@ -25,13 +25,20 @@ vector<int> points;
 vector< vector<int> > posClauses;
 vector< vector<int> > negClauses;
 
+
+/********* PREGUNTAS *********/
+/* Porque va muchisimo mas rapido (unas 10 veces mas rapido) si la division
+ * se hace si hay alguna puntuacion mayor al numero de clausulas, en vez de cada
+ * X decisiones o en cada conflicto (tal como pone en el pdf de vsids)?
+*/
+
 void dividePoints () {
   for (uint i = 0; i < points.size(); ++i) {
     points[i] /= DIVIDER;
   }
 }
 
-void readClauses( ){
+void readClauses () {
   // Skip comments
   char c = cin.get();
   while (c == 'c') {
@@ -52,6 +59,7 @@ void readClauses( ){
       clauses[i].push_back(lit);
       if (lit > 0) posClauses[lit].push_back(i);
       else negClauses[-lit].push_back(i);
+      ++points[abs(lit)];
     }
   }
 }
@@ -126,9 +134,12 @@ int getNextDecisionLiteral(){
       break;
     }
   }
-  for (i; i <= numVars; ++i) // stupid heuristic:
+  for (i; i <= numVars; ++i)
     if (model[i] == UNDEF && points[i] > points[bigger])
       bigger = i;  // returns first UNDEF var, positively
+
+  if (points[bigger] > numClauses) dividePoints();
+
   return bigger; // reurns 0 when all literals are defined
 }
 
@@ -177,6 +188,6 @@ int main(){
     setLiteralToTrue(decisionLit);    // now push decisionLit on top of the mark
 
     ++numDecisions;
-    if (numDecisions > DECISIONS) dividePoints();
+    //if (numDecisions > DECISIONS) dividePoints();
   }
 }
